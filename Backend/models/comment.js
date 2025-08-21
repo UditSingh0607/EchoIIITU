@@ -1,20 +1,32 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 
 const commentSchema = new mongoose.Schema({
-  postId: {
+
+
+  userId:{
+
+    type:String,
+    required:true
+
+  },
+  postId: { 
      type: mongoose.Schema.Types.ObjectId,
-     ref: "Post", required: true },
+     ref: "Post", required: true
+     },
   parentId: { 
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Comment", default: null }, // for replies
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "Comment", default: null },
   content: { 
-    type: String,
+    type: String, 
     required: true },
-  createdAt: { 
-    type: Date, 
-    default: Date.now 
-    },
+  reactions: {
+    like: { type: Number, default: 0 },
+    love: { type: Number, default: 0 },
+    laugh: { type: Number, default: 0 },
+    wow: { type: Number, default: 0 }
+  },
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("Comment", commentSchema);
