@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const commentController = require("../controllers/commentController");
-const toxicityMiddleware=require('../middleware/toxicityMiddleware');
+const toxicityMiddleware=require('../middlewares/toxicityMiddleware');
 
 
 // Add comment to a post

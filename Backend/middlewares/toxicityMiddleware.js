@@ -1,4 +1,4 @@
-const checkToxicity = require("../utils/toxicitycheck");
+const checkToxicity = require("../utils/toxicityChecker");
 
 async function toxicityMiddleware(req, res, next) {
   try {

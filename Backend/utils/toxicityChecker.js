@@ -1,4 +1,8 @@
-const openai = require("openai"); 
+const OpenAI = require("openai"); 
+require('dotenv').config();
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /**
  * Check toxicity of a given text using GPT
