@@ -1,9 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const commentController = require("../controllers/commentController");
+const toxicityMiddleware=require('../middlewares/toxicityMiddleware');
+
 
 // Add comment to a post
-router.post("/:postId", commentController.addComment);
+router.post("/:postId",toxicityMiddleware, commentController.addComment);
+
+router.post("/:commentId/reactions",commentController.addReaction);
 
 // Get all comments for a post
 router.get("/:postId", commentController.getComments);
