@@ -1,4 +1,4 @@
-const Comment = require("../models/commentModel");
+const Comment = require("../models/comment");
 const logger = require("../utils/logger");
 
 // Add a new comment to a post

@@ -64,6 +64,10 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+      likedBy: {
+    type: [String], // store deviceIds or sessionIds
+    default: [],
+  }, 
 
     // Comments (references to Comment schema)
     commentIds: [
