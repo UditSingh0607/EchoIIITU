@@ -2,10 +2,21 @@ const Post = require("../models/postSchema");
 const OpenAI = require("openai");
 const logger = require("../utils/logger");
 const dotenv = require("dotenv");
+const Tesseract = require("tesseract.js");
 dotenv.config(); 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+async function extractTextFromImage(url) {
+  try {
+    const result = await Tesseract.recognize(url, "eng");
+    return result.data.text;
+  } catch (err) {
+    console.error("❌ OCR Error:", err);
+    return "";
+  }
+}
 
 // 1. Get posts by type
 exports.getPostsByType = async (req, res) => {
@@ -27,8 +38,29 @@ exports.getPostsByType = async (req, res) => {
 // 2. Classify raw text using GPT
 exports.classifyText = async (req, res) => {
   try {
-    const { text } = req.body;
-    if (!text) return res.status(400).json({ error: "Text is required" });
+    const { text, attachmentURL } = req.body;
+    if (!text && !attachmentURL) {
+      return res.status(400).json({ error: "Text or attachmentURL is required" });
+    }
+
+    let finalText = text || "";
+
+    // If image is present → extract text and append
+     if (attachmentURL) {
+      try {
+        const extractedText = await extractTextFromImage(attachmentURL);
+        finalText = `${finalText}\n${extractedText}`.trim();
+
+        // Case: attachment exists but both text & extracted text are empty
+        if (!finalText) {
+          return res.status(400).json({ error: "❌ Can't read the image" });
+        }
+      } catch (err) {
+        return res.status(500).json({ error: "❌ Can't read the image" });
+      }
+    }
+    //const { text } = req.body;
+    if (!finalText) return res.status(400).json({ error: "Text is required" });
 
     // Call GPT for classification
     const response = await openai.chat.completions.create({
@@ -59,8 +91,20 @@ If some detail is missing, return null for that field.`,
     });
 
     const classification = response.choices[0].message.content;
-    const parsed = JSON.parse(classification); // GPT returns JSON
+    let parsed;
+    try {
+      parsed = JSON.parse(classification);
+    } catch (err) {
+      return res.status(500).json({ error: "Invalid AI response format" });
+    }
+    if (attachmentURL) parsed.attachmentURL = attachmentURL;
 
+    if (parsed.classification === "unknown") {
+      return res.status(422).json({
+        error: "Could not classify post into a known type, Try changing the text or image.",
+        details: parsed,
+      });
+    }
     res.json(parsed);
   } catch (error) {
     console.error("❌ Error in classifyText:", error);
@@ -87,6 +131,50 @@ exports.createPost = async (req, res) => {
     res.status(500).json({ error: "Error creating post" });
   }
 };
+
+exports.respondToEvent = async (req, res) => {
+  try {
+    const deviceId = req.deviceId;
+    if (!deviceId) return res.status(400).json({ error: "No deviceId found" });
+
+    const { status } = req.body; // "going" | "interested" | "notGoing"
+    if (!["going", "interested", "notGoing"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const post = await Post.findById(req.params.id);
+    if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Ensure we track event responses per device
+    if (!post.responses) post.responses = new Map(); // { deviceId: "going" }
+    
+    const prevStatus = post.responses.get(deviceId);
+
+    // If user changes status
+    if (prevStatus && prevStatus !== status) {
+      if (prevStatus === "going") post.goingCount -= 1;
+      if (prevStatus === "interested") post.interestedCount -= 1;
+      if (prevStatus === "notGoing") post.notGoingCount -= 1;
+    }
+
+    // If new status (or changed)
+    if (prevStatus !== status) {
+      if (status === "going") post.goingCount += 1;
+      if (status === "interested") post.interestedCount += 1;
+      if (status === "notGoing") post.notGoingCount += 1;
+
+      // Save new status
+      post.responses.set(deviceId, status);
+    }
+
+    await post.save();
+    res.json(post);
+  } catch (error) {
+    console.error("❌ Error in respondToEvent:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 
 exports.likePost = async (req, res) => {
   try {

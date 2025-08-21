@@ -60,6 +60,11 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    responses: {
+  type: Map,
+  of: String, // deviceId -> "going" | "interested" | "notGoing"
+  default: {},
+},
     likes: {
       type: Number,
       default: 0,
