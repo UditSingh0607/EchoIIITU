@@ -80,17 +80,17 @@ exports.deleteComment = async (req, res) => {
 // ✅ Add / Toggle a reaction to a comment
 exports.addReaction = async (req, res) => {
   try {
-    const { id } = req.params;       // commentId
+    const { commentId } = req.params;       // commentId
     const { type } = req.body;       // e.g. "like", "love", "laugh", "wow"
-    const userId = req.userId;       // simulated identity (cookie/device ID)
+    const userId = req.deviceId;       // simulated identity (cookie/device ID)
 
-    logger.info(`Adding ${type} reaction by ${userId} to comment ${id}`);
+    logger.info(`Adding ${type} reaction by ${userId} to comment ${commentId}`);
 
     if (!["like", "love", "laugh", "wow"].includes(type)) {
       return res.status(400).json({ message: "❌ Invalid reaction type" });
     }
 
-    const comment = await Comment.findById(id);
+    const comment = await Comment.findById(commentId);
     if (!comment) {
       return res.status(404).json({ message: "❌ Comment not found" });
     }
