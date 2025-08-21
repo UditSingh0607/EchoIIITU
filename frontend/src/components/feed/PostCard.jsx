@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { CommentThread } from './comments/CommentThread'
+import { EmojiBar } from '../common/EmojiBar'
 
 const TYPE_BADGE = {
   event: { label: 'Event', color: '#0f9d58' },
@@ -9,6 +10,7 @@ const TYPE_BADGE = {
 
 export const PostCard = ({ post, onRSVP, onReact, onCommentReact, onAddComment }) => {
   const [userRsvp, setUserRsvp] = useState(post.event?.userRsvp || null)
+  const [showReactions, setShowReactions] = useState(false)
 
   function handleRsvp(status) {
     setUserRsvp(status)
@@ -46,9 +48,11 @@ export const PostCard = ({ post, onRSVP, onReact, onCommentReact, onAddComment }
       )}
 
       <footer className="post-card__footer">
-        <button className="icon-btn" onClick={() => onReact?.(post.id, 'like')}>❤ {post.reactions?.likes ?? 0}</button>
+        <button className="icon-btn" onClick={() => setShowReactions(v => !v)}>React</button>
         <button className="icon-btn">💬 {post.reactions?.comments ?? 0}</button>
-        <button className="icon-btn">🔁 {post.reactions?.shares ?? 0}</button>
+        {showReactions && (
+          <EmojiBar onPick={(emoji) => { setShowReactions(false); onReact?.(post.id, emoji) }} />
+        )}
       </footer>
 
       <CommentThread
