@@ -1,7 +1,8 @@
 const Post = require("../models/postSchema");
 const OpenAI = require("openai");
 const logger = require("../utils/logger");
-
+const dotenv = require("dotenv");
+dotenv.config(); 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -9,13 +10,13 @@ const openai = new OpenAI({
 // 1. Get posts by type
 exports.getPostsByType = async (req, res) => {
   try {
-    const { type } = req.query;
-    logger.info("Fetching posts of type:", type);
-    if (!["event", "lost_and_found", "announcement"].includes(type)) {
+    const { classification } = req.params;
+    logger.info("Fetching posts of type:", classification);
+    if (!["event", "lost_and_found", "announcement"].includes(classification)) {
       return res.status(400).json({ error: "Invalid type" });
     }
 
-    const posts = await Post.find({ classification: type }).sort({ createdAt: -1 });
+    const posts = await Post.find({ classification: classification }).sort({ createdAt: -1 });
     res.json(posts);
   } catch (error) {
     logger.error("❌ Error in getPostsByType:", error);
@@ -89,13 +90,21 @@ exports.createPost = async (req, res) => {
 
 exports.likePost = async (req, res) => {
   try {
-    const post = await Post.findByIdAndUpdate(
-      req.params.id,
-      { $inc: { likes: 1 } }, // increment likes by 1
-      { new: true }
-    );
+    const deviceId = req.deviceId;
+    if (!deviceId) return res.status(400).json({ error: "No deviceId found" });
 
+    const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ error: "Post not found" });
+
+    // Check if device already liked
+    if (post.likedBy.includes(deviceId)) {
+      return res.status(400).json({ error: "Already liked by this device" });
+    }
+
+    // Otherwise increment and save deviceId
+    post.likes += 1;
+    post.likedBy.push(deviceId);
+    await post.save();
 
     res.json(post);
   } catch (error) {

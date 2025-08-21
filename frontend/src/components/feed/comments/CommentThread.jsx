@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { EmojiBar } from '../../common/EmojiBar'
 
 export const CommentThread = ({ postId, comments, onReact, onAddComment, depth = 0 }) => {
   const [newText, setNewText] = useState('')
@@ -41,6 +42,7 @@ export const CommentThread = ({ postId, comments, onReact, onAddComment, depth =
 const CommentItem = ({ postId, comment, onReact, onAddComment, depth }) => {
   const [replyText, setReplyText] = useState('')
   const [isReplying, setIsReplying] = useState(false)
+  const [showReactions, setShowReactions] = useState(false)
 
   function handleReact(emoji) {
     onReact?.({ postId, commentId: comment.id, reaction: emoji })
@@ -67,7 +69,8 @@ const CommentItem = ({ postId, comment, onReact, onAddComment, depth }) => {
       <div className="comment__actions">
         <button className="icon-btn" onClick={() => handleReact('like')}>👍 {comment.likes ?? 0}</button>
         <button className="icon-btn" onClick={() => setIsReplying(v => !v)}>Reply</button>
-        <EmojiBar onPick={handleReact} />
+        <button className="icon-btn" onClick={() => setShowReactions(v => !v)}>React</button>
+        {showReactions && <EmojiBar onPick={(emoji) => { setShowReactions(false); handleReact(emoji) }} />}
       </div>
       {isReplying && (
         <div className="comments__create" style={{ marginTop: 8 }}>
@@ -98,16 +101,6 @@ const CommentItem = ({ postId, comment, onReact, onAddComment, depth }) => {
     </div>
   )
 }
-
-const EMOJIS = ['👍','❤️','😂','🎉','😮','😢']
-
-const EmojiBar = ({ onPick }) => (
-  <div className="emoji-bar">
-    {EMOJIS.map(e => (
-      <button key={e} className="emoji" onClick={() => onPick(e)}>{e}</button>
-    ))}
-  </div>
-)
 
 function timeAgo(ts) {
   const diff = Math.max(0, Date.now() - ts)
