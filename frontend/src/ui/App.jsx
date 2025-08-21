@@ -1,16 +1,14 @@
 import React, { useMemo, useState } from 'react'
 
-type TabKey = 'create' | 'lostFound' | 'events' | 'announcements'
-
-const TABS: { key: TabKey; label: string }[] = [
+const TABS = [
   { key: 'create', label: 'Create Post' },
   { key: 'lostFound', label: 'Lost & Found' },
   { key: 'events', label: 'Events' },
   { key: 'announcements', label: 'Announcements' }
 ]
 
-export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabKey>('create')
+export const App = () => {
+  const [activeTab, setActiveTab] = useState('create')
 
   return (
     <div className="app">
@@ -40,7 +38,7 @@ export const App: React.FC = () => {
   )
 }
 
-const EmptyList: React.FC<{ label: string }> = ({ label }) => (
+const EmptyList = ({ label }) => (
   <section className="panel">
     <div className="empty">
       <p>No {label} posts yet.</p>
@@ -48,12 +46,12 @@ const EmptyList: React.FC<{ label: string }> = ({ label }) => (
   </section>
 )
 
-const CreatePostSection: React.FC = () => {
+const CreatePostSection = () => {
   const [prompt, setPrompt] = useState('')
-  const [attachment, setAttachment] = useState<File | null>(null)
+  const [attachment, setAttachment] = useState(null)
   const isDisabled = useMemo(() => prompt.trim().length === 0, [prompt])
 
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(event) {
     const file = event.target.files?.[0] || null
     setAttachment(file)
   }
